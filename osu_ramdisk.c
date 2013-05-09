@@ -34,7 +34,7 @@
 #include <linux/bio.h>
 #include <linux/crypto.h>
 
-MODULE_LICENSE("DUAL BSD/GPL");
+MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Kai Jenkins-Rathbun, Jordan Bayles, Corey Eckelman, Jennifer Wolfe");
 MODULE_DESCRIPTION("Ramdisk device driver that uses crypto for encryption/decription as you read and write");
 
