@@ -358,6 +358,7 @@ config BLK_DEV_RAM
 
 config BLK_DEV_OSU_RAMDISK
 	tristate "Oregon State University Ramdisk Driver"
+	default m
 	---help---
 	 This is a custom ramdisk device driver, which uses the
 	 Crypto API to add encryption to the block device. The device
