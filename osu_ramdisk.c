@@ -5,6 +5,10 @@
  *			Jordan Bayles,
  *			Corey Eckelman,
  *			Jennifer Wolfe
+ *
+ * Based on examples from Linux Driver Development 3rd Edition. (ch 16)
+ * By Jonathan Corbet, Alessandro Rubini, Greg Kroah-Hartman.
+ *
  * osu_ramdisk - A ramdisk block device driver for linux-3.0.4. This driver
  *              uses Crypto to encrypt and decrypt on read and write using 
  *				des encryption.
