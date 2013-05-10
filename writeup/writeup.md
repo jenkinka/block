@@ -1,14 +1,15 @@
 Project 3
----------
+=========
+TODO: our names here.
 
 Plan
-====
+----
 -We based our code off of ...
 -added in crypto stuff
 -etc
 
 Implementation
-==============
+--------------
 -implemented as a kernel module
 -registers itself as a block device
 -special module parameters, including stuff for sectors,
@@ -17,6 +18,9 @@ Implementation
 -creates a block_device_operations struct
 - n functions:
 - list
+
+Implementation Details
+----------------------
 
 ***osu_ramdisk_init()***
 -registers  (using register_blkdev().)
@@ -75,7 +79,11 @@ does a bio request (todo explain)
 
 ***osu_ramdisk_transfer()***
 
+Testing
+-------
 
-src
----
+-How we are going to test the file.
+
+Source Code
+===========
 <include source here>
