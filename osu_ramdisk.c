@@ -98,6 +98,7 @@ MODULE_PARM_DESC(encrypt, "Encryption added");
 
 /* Crypto key */
 static char key[128];
+strcpy(key, "ADFJSDLKF*38923489248923*#$*(#*@%*(!@$FDfasdfasdfasdfsdafasd");
 module_param(key, charp, S_IRUGO);
 MODULE_PARM_DESC(key, "Encryption key");
 
