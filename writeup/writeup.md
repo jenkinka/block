@@ -27,62 +27,52 @@ Implementation
 The driver exposes itself as a block device, which reads and 
 writes to a block of memory, allocated when it is initialized.
 We have three different request modes for our file system:
- * RM_NO_QUEUE: This 
- * RM_FULL: 
- * RM_SIMPLE:
+ * RM_NO_QUEUE: This implements requests using no queue, and 
+   blk_queue_make_request().
+ * RM_FULL: This implements requests using blk_init_queue() and
+   a request function that groups requests.
+ * RM_SIMPLE: This implements requests using blk_init_queue() and 
+   a function that does not group requests.
 
 ***Crypto Implementation***
 - how it works
 
 Implementation Details
 ----------------------
-
 ***osu_ramdisk_init()***
--registers  (using register_blkdev().)
--also creates crypto, initializes using crypto_alloc (aes)
--then allocates the ramdisks. each one is 
+This function registers the ramdisk using register_blkdev(), 
+initializes crypto stuff, and allocates teh ramdisks using 
+setup_device().
 
 ***osu_ramdisk_exit()***
--this frees each block device (vfree()s data), then 
+This function frees each block device (vfree()s data), then 
 calls unregister_blkdev(), crypto_free_cipher(), and kfree()
 in order to clean up.
 
 ***setup_device()***
-In this function, we setup a single device
-(e.g. /dev/osuramdiska)
-- we create a osu_ramdisk_device instance 
-- (more explanation ..)
+In this function we set up a single device, creating an
+osu_ramdisk_device instance (e.g. /dev/osuramdiska). We 
+first zero the memory, and set up its size. Then we register
+the correct request function for the device using either 
+blk_init_queue(), or blk_queue_make_request().
 
 ***osu_ramdisk_getgeo()***
-We basically have to lie here about what our device looks like, 
-because it does not physically exist.
-- we get the size in (units) from the block_device param passed in
-we then (make up something plausible to put as the hd geometry)
+We make up what our device looks like, 
+because it does not physically exist, getting
+the size in (units) from the block_device param passed in
 and then we set the cylinders relative to the size. 
-- we need to do this, in order to implement partitioning, so we 
-  can put files on this
-
-***osu_ramdisk_invalidate()***
-uhhh what does this one do?
-
-***osu_ramdisk_revalidate()***
-uhh this one too
-
-***osu_ramdisk_media_changed()***
-
-***osu_ramdisk_release()***
-
-***osu_ramdisk_open()***
 
 ***osu_ramdisk_make_request()***
 This function takes a  request from the request queue and 
 processes it using osu_ramdisk_bio_transfer().
 
 ***osu_ramdisk_full_request()***
+Groups requests, and handles them similar to osu_ramdisk_request().
 
 ***osu_ramdisk_transfer_request()***
-Enumerates over each request in a bio 
-
+Enumerates over each request in a bio struct, and calls
+osu_ramdisk_bio_transfer() on each. Then, returns the number
+of sectors written.
 
 ***osu_ramdisk_bio_transfer()***
 Iterates over each bio_vec in a given bio struct, and transfers
@@ -94,7 +84,8 @@ enumerating over it using blk_fetch_request(),
 and calling osu_ramdisk_transfer() on each request.
 
 ***osu_ramdisk_transfer()***
-
+Transfers data from a buffer to the disk, encrypting it, or 
+transfers it from the ramdisk to a buffer, decrypting it. 
 
 Testing
 -------
@@ -104,4 +95,4 @@ Testing
 
 Source Code
 ===========
-<include source here>
+<include test script here>
