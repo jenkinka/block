@@ -6,7 +6,8 @@ Plan
 ----
 -We based our code off of ...
 -added in crypto stuff
--etc
+-talk about advantages
+-talk about dis-ad..
 
 Implementation
 --------------
@@ -18,6 +19,14 @@ Implementation
 -creates a block_device_operations struct
 - n functions:
 - list
+
+***Ramdisk Implementation***
+The driver exposes itself as a block device, which reads and 
+writes to a block of memory, allocated when it is initialized.
+The 
+
+***Crypto Implementation***
+- how it works
 
 Implementation Details
 ----------------------
@@ -82,7 +91,8 @@ does a bio request (todo explain)
 Testing
 -------
 
--How we are going to test the file.
+-We can test basic functionality by doing reads and writes to the filesys.
+-We can test the encryption by printk-ing the encry
 
 Source Code
 ===========
