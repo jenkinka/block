@@ -1,0 +1,107 @@
+\section{Project 3: Encrypted Ramdisk}
+
+Jordan Bayles Corey Eckelman Kai Jenkins-Rathburn Jennifer Wolfe
+
+\subsection{Plan}
+
+We started by basing our code off of the sbull.c driver from Linux
+Driver Development 3rd Edition. We felt this was a good jumping off
+point and that it was very well documented so we would be able to more
+easily make the necessary changes to both port it to the current version
+of linux, and implement crypto. Additionally, we felt that there would
+present enough of a challenge that we would need to understand how
+everything works.
+
+We implemented the cryptography functions using the linux crypto API
+(linux/crypto.h). The module takes in the key as a module parameter, and
+encrypts blocks using it.
+
+We started work on this project by distributing the workload evenly
+between ourselves, having two people work on code, one on the writeup
+and one on testing. This allowed each of us to share the work and still
+each have a good understanding of how the driver is implemented.
+
+\subsection{Implementation}
+
+The driver itself is implemented as a kernel module. It register itself
+as a block device, adding itself In each devices setup function it adds
+itself as a disk. It stores some specific module parameters including
+the amount of devices to store and the request mode.
+
+The block\_device\_operations struct implements .getgeo, as well as many
+operations related to acquiring handles or changing media in the drive.
+
+\textbf{\emph{Ramdisk Implementation}} The driver exposes itself as a
+block device, which reads and writes to a block of memory, allocated
+when it is initialized. We have three different request modes for our
+file system: 
+\begin{itemize}
+\item{RM\_NO\_QUEUE} This implements requests using no queue,
+and blk\_queue\_make\_request().  
+\item{RM\_FULL} This implements requests
+using blk\_init\_queue() and a request function that groups requests. 
+\item{RM\_SIMPLE} This implements requests using blk\_init\_queue() and a
+function that does not group requests.
+\end{itemize}
+
+\textbf{\emph{Crypto Implementation}} In the devices setup function we
+call crypto\_alloc\_cipher(), to create a new cipher object, and we free
+it in the \emph{exit function with crypto}free\_cipher(). The main bulk
+of the crypto work happens in ramdisk\_transfer()- we set our key to the
+one defined in the module parameter, and then we either read or write
+whole blocks using crypto\_cipher\_decrypt\_one() or
+crypto\_cipher\_encrypt\_one() respectively.
+
+\subsection{Implementation Details}
+
+\textbf{\emph{osu\_ramdisk\_init()}} This function registers the ramdisk
+using register\_blkdev(), initializes crypto stuff, and allocates teh
+ramdisks using setup\_device().
+
+\textbf{\emph{osu\_ramdisk\_exit()}} This function frees each block
+device (vfree()s data), then calls unregister\_blkdev(),
+crypto\_free\_cipher(), and kfree() in order to clean up.
+
+\textbf{\emph{setup\_device()}} In this function we set up a single
+device, creating an osu\_ramdisk\_device instance (e.g.
+/dev/osuramdiska). We first zero the memory, and set up its size. Then
+we register the correct request function for the device using either
+blk\_init\_queue(), or blk\_queue\_make\_request().
+
+\textbf{\emph{osu\_ramdisk\_getgeo()}} We make up what our device looks
+like, because it does not physically exist, getting the size in (units)
+from the block\_device param passed in and then we set the cylinders
+relative to the size.
+
+
+\textbf{\emph{osu\_ramdisk\_make\_request()}} This function takes a
+request from the request queue and processes it using
+osu\_ramdisk\_bio\_transfer().
+
+\textbf{\emph{osu\_ramdisk\_full\_request()}} Groups requests, and
+handles them similar to osu\_ramdisk\_request().
+
+\textbf{\emph{osu\_ramdisk\_transfer\_request()}} Enumerates over each
+request in a bio struct, and calls osu\_ramdisk\_bio\_transfer() on
+each. Then, returns the number of sectors written.
+
+\textbf{\emph{osu\_ramdisk\_bio\_transfer()}} Iterates over each
+bio\_vec in a given bio struct, and transfers them using
+osu\_ramdisk\_transfer().
+
+\textbf{\emph{osu\_ramdisk\_request()}} Handles simple requests.
+Transfers each request in the queue by enumerating over it using
+blk\_fetch\_request(), and calling osu\_ramdisk\_transfer() on each
+request.
+
+\textbf{\emph{osu\_ramdisk\_transfer()}} Transfers data from a buffer to
+the disk, encrypting it, or transfers it from the ramdisk to a buffer,
+decrypting it.
+
+\subsection{Testing}
+
+-We can test basic functionality by doing reads and writes to the
+filesys. -We can test the encryption by printk-ing the encrypted /
+decrypte stuff.
+
+\section{Source Code}
