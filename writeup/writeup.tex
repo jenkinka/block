@@ -1,4 +1,3 @@
-
 \documentclass[11pt]{article}
 \begin{document}
 \section{Project 3: Encrypted Ramdisk}
@@ -103,9 +102,9 @@ decrypting it.
 
 \subsection{Testing}
 
--We can test basic functionality by doing reads and writes to the
-filesys. -We can test the encryption by printk-ing the encrypted /
-decrypte stuff.
+The testing file, created by Jordan, tests writing to the disk using dd, and verifies it writes correctly.
+It then creates a filesystem on the disk and mounts it, and tests writing to it as a filesystem, verifying
+if it writes correctly.
 
 \section{Source Code}
 
