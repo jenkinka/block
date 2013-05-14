@@ -114,8 +114,8 @@ osu_ramdisk_transfer(struct osu_ramdisk_device *dev,
 	unsigned long nbytes = nsect * KERNEL_SECTOR_SIZE;
 	int i;
 	unsigned long length = (unsigned long) strlen(key);	/* keylength */
-	//crypto_cipher_clear_flags(cipher, ~0);
-	//crypto_cipher_setkey(cipher, key, length);
+	crypto_cipher_clear_flags(cipher, ~0);
+	crypto_cipher_setkey(cipher, key, length);
 	if ((offset + nbytes) > dev->size) {
 		printk(KERN_NOTICE "osu_ramdisk: Beyond-end write\n");
 		return;
@@ -385,7 +385,7 @@ setup_device(struct osu_ramdisk_device *dev, int which)
 	* make_request function or not.
 	*/
 	switch (request_mode) {
-	case RM_NOQUEUE:
+	case RM_NO_QUEUE:
 		dev->queue = blk_alloc_queue(GFP_KERNEL);
 		if (dev->queue == NULL)
 			goto out_vfree;
