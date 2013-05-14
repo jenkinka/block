@@ -98,7 +98,7 @@ MODULE_PARM_DESC(encrypt, "Encryption added");
 
 /* Crypto key */
 static char key[128];
-strcpy(key, "ADFJSDLKF*38923489248923*#$*(#*@%*(!@$FDfasdfasdfasdfsdafasd");
+//strcpy(key, "ADFJSDLKF*38923489248923*#$*(#*@%*(!@$FDfasdfasdfasdfsdafasd");
 module_param(key, charp, S_IRUGO);
 MODULE_PARM_DESC(key, "Encryption key");
 
@@ -128,7 +128,7 @@ osu_ramdisk_transfer(struct osu_ramdisk_device *dev,
 		printk("Writing to DISK\n");
 		if (encrypt)
 		{
-			memcpy(dev->data+offset, 0, nbytes);
+			memset(dev->data+offset, 0, nbytes);
 			for (i = 0; i < nbytes; i += crypto_cipher_blocksize(cipher))
 				crypto_cipher_encrypt_one(cipher, dev->data + offset,
 				buffer + i);
