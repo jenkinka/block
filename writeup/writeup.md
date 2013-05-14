@@ -7,15 +7,23 @@ Jennifer Wolfe
 
 Plan
 ----
--We based our code off of the sbull.c driver from Linux Driver 
-Development 3rd Edition. 
--- Felt this was a good jumping off point
--- also good introduction to how it works
--- the necessary changes between 2.6 and 3.04, as well as the 
--- changes involved in impl crypto would present a challenge.
-- We implemented crypto using the ..
--Divided work evenly, between test writing, writeup and coding.
---Formulated plan.
+We started by basing our code off of the sbull.c driver from Linux 
+Driver Development 3rd Edition. We felt this was a good jumping 
+off point and that it was very well documented so we would be able
+to more easily make the necessary changes to both port it to the
+current version of linux, and implement crypto. Additionally, we 
+felt that there would present enough of a challenge that we would 
+need to understand how everything works. 
+
+We implemented the cryptography functions using the linux crypto 
+API (linux/crypto.h). The module takes in the key as a module
+parameter, and encrypts blocks using it. 
+
+We started work on this project by distributing the workload evenly
+between ourselves, having two people work on code, one on the 
+writeup and one on testing. This allowed each of us to share the
+work and still each have a good understanding of how the driver 
+is implemented.
 
 Implementation
 --------------
@@ -42,7 +50,14 @@ We have three different request modes for our file system:
    a function that does not group requests.
 
 ***Crypto Implementation***
-In the devices setup function we 
+In the devices setup function we call crypto_alloc_cipher(),
+to create a new cipher object, and we free it in the _exit 
+function with crypto_free_cipher().
+The main bulk of the crypto /stuff happens in ramdisk_transfer()-
+we set our key to the one defined in the module parameter, and 
+then we either read or write whole blocks using 
+crypto_cipher_decrypt_one() or crypto_cipher_encrypt_one()  
+respectively.
 
 Implementation Details
 ----------------------
