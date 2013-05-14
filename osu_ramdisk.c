@@ -94,10 +94,10 @@ module_param(request_mode, int, 0);
 MODULE_PARM_DESC(request_mode, "Request mode");
 
 module_param(encrypt, int, 0);
-MODULE_PARAM_DESC(encrypt, "Encrypt? (1,0)");
+MODULE_PARM_DESC(encrypt, "Encryption added");
 
 /* Crypto key */
-static char key[128] = "myinsecurekey123456";
+static char key[128];
 module_param(key, charp, S_IRUGO);
 MODULE_PARM_DESC(key, "Encryption key");
 
@@ -458,6 +458,7 @@ osu_ramdisk_init(void)
 			printk(KERN_ERR "osu_ramdisk_init: Failed to load cipher\n");
 			return PTR_ERR(cipher);
 		}
+		memset(key, 0, 128); 
 	}
 	
 	/* Allocate teh device array and init each of them */
