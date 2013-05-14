@@ -1,4 +1,5 @@
 /*
+<<<<<<< HEAD
 * Filename: osu_ramdisk.c
 *
 * Authors: Kai Jenkins-Rathbun,
@@ -16,6 +17,25 @@
 * Redistributable under the terms of the GNU GPL
 *
 */
+=======
+ * Filename: osu_ramdisk.c
+ *
+ * Authors: Kai Jenkins-Rathbun,
+ *          Jordan Bayles,
+ *          Corey Eckelman,
+ *          Jennifer Wolfe
+ *
+ * Based on examples from Linux Driver Development 3rd Edition. (ch 16)
+ * By Jonathan Corbet, Alessandro Rubini, Greg Kroah-Hartman.
+ *
+ * osu_ramdisk - A ramdisk block device driver for linux-3.0.4. This driver
+ *              uses Crypto to encrypt and decrypt on read and write using
+ *              AES encryption.
+ *
+ * Redistributable under the terms of the GNU GPL
+ *
+ */
+>>>>>>> 7d4f229b78b0c858b47e5c8c66f66c5732df4b66
 
 #include <linux/blkdev.h>
 #include <linux/module.h>
@@ -23,6 +43,7 @@
 #include <linux/init.h>
 #include <linux/major.h>
 #include <linux/sched.h>
+<<<<<<< HEAD
 #include <linux/kernel.h> /* printk() */
 #include <linux/slab.h> /* kmalloc() */
 #include <linux/fs.h> /* everything... */
@@ -31,11 +52,21 @@
 #include <linux/types.h> /* size_t */
 #include <linux/fcntl.h> /* O_ACCMODE */
 #include <linux/hdreg.h> /* HDIO_GETGEO */
+=======
+#include <linux/kernel.h>	/* printk() */
+#include <linux/slab.h>		/* kmalloc() */
+#include <linux/fs.h>		/* everything... */
+#include <linux/errno.h>	/* error codes */
+#include <linux/timer.h>
+#include <linux/types.h>	/* size_t */
+#include <linux/fcntl.h>	/* O_ACCMODE */
+#include <linux/hdreg.h>	/* HDIO_GETGEO */
+>>>>>>> 7d4f229b78b0c858b47e5c8c66f66c5732df4b66
 #include <linux/kdev_t.h>
 #include <linux/vmalloc.h>
 #include <linux/genhd.h>
 #include <linux/blkdev.h>
-#include <linux/buffer_head.h> /* invalidate_bdev */
+#include <linux/buffer_head.h>	/* invalidate_bdev */
 #include <linux/bio.h>
 #include <linux/crypto.h>
 
@@ -54,16 +85,28 @@ MODULE_DESCRIPTION
 
 /* Request modes */
 enum {
+<<<<<<< HEAD
 	RM_SIMPLE = 0,	/* simple requst function */
 	RM_FULL = 1,	/* The full version */
 	RM_NO_QUEUE = 2	/* Use make_request */
+=======
+	RM_SIMPLE = 0,		/* simple requst function */
+	RM_FULL = 1,		/* The full version */
+	RM_NO_QUEUE = 2		/* Use make_request */
+>>>>>>> 7d4f229b78b0c858b47e5c8c66f66c5732df4b66
 };
 
 /* Our device internal structure*/
 struct osu_ramdisk_device {
+<<<<<<< HEAD
 	int size;	/* Device size in sectors */
 	u8 *data;	/* The data array */
 	short users;	/* How many users */
+=======
+	int size;		/* Device size in sectors */
+	u8 *data;		/* The data array */
+	short users;		/* How many users */
+>>>>>>> 7d4f229b78b0c858b47e5c8c66f66c5732df4b66
 	short media_change;	/* Flag a media change? */
 	spinlock_t lock;	/* For mutual exclusion */
 	struct request_queue *queue;	/* The device request queue */
@@ -92,12 +135,18 @@ MODULE_PARM_DESC(ndevices, "Number of devices");
 
 module_param(request_mode, int, 0);
 MODULE_PARM_DESC(request_mode, "Request mode");
+<<<<<<< HEAD
 
 module_param(encrypt, int, 0);
 MODULE_PARM_DESC(encrypt, "Encryption added");
 
 /* Crypto key */
 static char key[128];
+=======
+
+/* Crypto key */
+static char *key = "myinsecurekey123456";
+>>>>>>> 7d4f229b78b0c858b47e5c8c66f66c5732df4b66
 module_param(key, charp, S_IRUGO);
 MODULE_PARM_DESC(key, "Encryption key");
 
@@ -107,14 +156,23 @@ static struct crypto_cipher *cipher = NULL;
 /* Handle an I/O request*/
 static void
 osu_ramdisk_transfer(struct osu_ramdisk_device *dev,
+<<<<<<< HEAD
 	sector_t sector, unsigned long nsect,
 	char *buffer, int write)
+=======
+		     sector_t sector, unsigned long nsect,
+		     char *buffer, int write)
+>>>>>>> 7d4f229b78b0c858b47e5c8c66f66c5732df4b66
 {
 	unsigned long offset = sector * KERNEL_SECTOR_SIZE;
 	unsigned long nbytes = nsect * KERNEL_SECTOR_SIZE;
 	int i;
 	unsigned long length = (unsigned long) strlen(key);	/* keylength */
+<<<<<<< HEAD
 	
+=======
+
+>>>>>>> 7d4f229b78b0c858b47e5c8c66f66c5732df4b66
 	crypto_cipher_clear_flags(cipher, ~0);
 	crypto_cipher_setkey(cipher, key, length);
 	
@@ -123,6 +181,7 @@ osu_ramdisk_transfer(struct osu_ramdisk_device *dev,
 		return;
 	}
 
+<<<<<<< HEAD
 	if (write) {
 		printk("Writing to DISK\n");
 		if (encrypt)
@@ -143,12 +202,36 @@ osu_ramdisk_transfer(struct osu_ramdisk_device *dev,
 		}else
 			memcpy(buffer, dev->data+offset, nbytes);
 		
+=======
+	if ((offset + nbytes) > dev->size) {
+		printk(KERN_NOTICE "osu_ramdisk: Beyond-end write\n");
+		return;
+	}
+
+	if (write) {
+		printk("Writing to DISK\n");
+		for (i = 0; i < nbytes; i += crypto_cipher_blocksize(cipher))
+			crypto_cipher_encrypt_one(cipher, dev->data + offset,
+						  buffer + i);
+
+	} else {
+		printk("Reading from Disk\n");
+		for (i = 0; i < nbytes; i += crypto_cipher_blocksize(cipher)) {
+			crypto_cipher_decrypt_one(cipher, buffer + i,
+						  dev->data + offset + i);
+		}
+>>>>>>> 7d4f229b78b0c858b47e5c8c66f66c5732df4b66
 	}
 }
 
 /*
+<<<<<<< HEAD
 * Our Simple request function
 */
+=======
+ * Our Simple request function
+ */
+>>>>>>> 7d4f229b78b0c858b47e5c8c66f66c5732df4b66
 static void
 osu_ramdisk_request(struct request_queue *q)
 {
@@ -157,16 +240,25 @@ osu_ramdisk_request(struct request_queue *q)
 	req = blk_fetch_request(q);
 	while (req != NULL) {
 		struct osu_ramdisk_device *Device = req->rq_disk->private_data;
+<<<<<<< HEAD
 	
+=======
+
+>>>>>>> 7d4f229b78b0c858b47e5c8c66f66c5732df4b66
 		if (req == NULL || (req->cmd_type != REQ_TYPE_FS)) {
 			printk(KERN_NOTICE "Skip non-CMD request\n");
 			__blk_end_request_all(req, -EIO);
 			continue;
 		}
-	
+
 		osu_ramdisk_transfer(Device, blk_rq_pos(req),
+<<<<<<< HEAD
 		blk_rq_cur_sectors(req), req->buffer,
 		rq_data_dir(req));
+=======
+				     blk_rq_cur_sectors(req), req->buffer,
+				     rq_data_dir(req));
+>>>>>>> 7d4f229b78b0c858b47e5c8c66f66c5732df4b66
 		if (!(__blk_end_request_cur(req, 0))) {
 			req = blk_fetch_request(q);
 		}
@@ -174,20 +266,29 @@ osu_ramdisk_request(struct request_queue *q)
 }
 
 /*
+<<<<<<< HEAD
 * Our bio transfer function transfers a single bio structure
 */
+=======
+ * Our bio transfer function transfers a single bio structure
+ */
+>>>>>>> 7d4f229b78b0c858b47e5c8c66f66c5732df4b66
 static int
 osu_ramdisk_bio_transfer(struct osu_ramdisk_device *dev, struct bio *pbio)
 {
 	int i;
 	struct bio_vec *bvec;
 	sector_t bsector = pbio->bi_sector;
-	
+
 	/* transfer each segment */
 	bio_for_each_segment(bvec, pbio, i) {
 		char *buff = __bio_kmap_atomic(pbio, i, KM_USER0);
 		osu_ramdisk_transfer(dev, bsector, bio_cur_bytes(pbio) >> 9,
+<<<<<<< HEAD
 		buff, bio_data_dir(pbio) == WRITE);
+=======
+				     buff, bio_data_dir(pbio) == WRITE);
+>>>>>>> 7d4f229b78b0c858b47e5c8c66f66c5732df4b66
 		bsector += bio_cur_bytes(pbio) >> 9;
 		__bio_kunmap_atomic(pbio, KM_USER0);
 	}
@@ -195,6 +296,7 @@ osu_ramdisk_bio_transfer(struct osu_ramdisk_device *dev, struct bio *pbio)
 }
 
 /*
+<<<<<<< HEAD
 * Transfer a full request
 */
 static int
@@ -204,6 +306,17 @@ struct request *req)
 	struct bio *pbio;
 	int nsect = 0;
 	
+=======
+ * Transfer a full request
+ */
+static int
+osu_ramdisk_transfer_request(struct osu_ramdisk_device *dev,
+			     struct request *req)
+{
+	struct bio *pbio;
+	int nsect = 0;
+
+>>>>>>> 7d4f229b78b0c858b47e5c8c66f66c5732df4b66
 	__rq_for_each_bio(pbio, req) {
 		osu_ramdisk_bio_transfer(dev, pbio);
 		nsect += pbio->bi_size / KERNEL_SECTOR_SIZE;
@@ -212,15 +325,20 @@ struct request *req)
 }
 
 /*
+<<<<<<< HEAD
 * Request function that "handles clustering".
 */
+=======
+ * Request function that "handles clustering".
+ */
+>>>>>>> 7d4f229b78b0c858b47e5c8c66f66c5732df4b66
 static void
 osu_ramdisk_full_request(struct request_queue *q)
 {
 	struct request *req;
 	int sectors_xferred;
 	struct osu_ramdisk_device *dev = q->queuedata;
-	
+
 	req = blk_fetch_request(q);
 	while (req != NULL) {
 		if (req == NULL || (req->cmd_type != REQ_TYPE_FS)) {
@@ -236,28 +354,38 @@ osu_ramdisk_full_request(struct request_queue *q)
 }
 
 /*
+<<<<<<< HEAD
 * The direct make request version.
 */
+=======
+ * The direct make request version.
+ */
+>>>>>>> 7d4f229b78b0c858b47e5c8c66f66c5732df4b66
 static int
 osu_ramdisk_make_request(struct request_queue *q, struct bio *pbio)
 {
 	struct osu_ramdisk_device *dev = q->queuedata;
 	int status;
-	
+
 	status = osu_ramdisk_bio_transfer(dev, pbio);
 	bio_endio(pbio, status);
 	return 0;
 }
 
 /*
+<<<<<<< HEAD
 * Open
 */
+=======
+ * Open
+ */
+>>>>>>> 7d4f229b78b0c858b47e5c8c66f66c5732df4b66
 
 static int
 osu_ramdisk_open(struct block_device *device, fmode_t mode)
 {
 	struct osu_ramdisk_device *dev = device->bd_disk->private_data;
-	
+
 	del_timer_sync(&dev->timer);
 	/* filp->private_data = dev; */
 	spin_lock(&dev->lock);
@@ -265,18 +393,27 @@ osu_ramdisk_open(struct block_device *device, fmode_t mode)
 		check_disk_change(device);
 	dev->users++;
 	spin_unlock(&dev->lock);
+<<<<<<< HEAD
 	
+=======
+
+>>>>>>> 7d4f229b78b0c858b47e5c8c66f66c5732df4b66
 	return 0;
 }
 
 /*
+<<<<<<< HEAD
 * Release
 */
+=======
+ * Release
+ */
+>>>>>>> 7d4f229b78b0c858b47e5c8c66f66c5732df4b66
 static int
 osu_ramdisk_release(struct gendisk *disk, fmode_t mode)
 {
 	struct osu_ramdisk_device *dev = disk->private_data;
-	
+
 	spin_lock(&dev->lock);
 	dev->users--;
 	if (!dev->users) {
@@ -284,13 +421,18 @@ osu_ramdisk_release(struct gendisk *disk, fmode_t mode)
 		add_timer(&dev->timer);
 	}
 	spin_unlock(&dev->lock);
-	
+
 	return 0;
 }
 
 /*
+<<<<<<< HEAD
 * Look for a (simulated) media change.
 */
+=======
+ * Look for a (simulated) media change.
+ */
+>>>>>>> 7d4f229b78b0c858b47e5c8c66f66c5732df4b66
 int
 osu_ramdisk_media_changed(struct gendisk *gd)
 {
@@ -299,6 +441,7 @@ osu_ramdisk_media_changed(struct gendisk *gd)
 }
 
 /*
+<<<<<<< HEAD
 * Revalidate. WE DO NOT TAKE THE LOCK HERE, for fear of deadlocking
 * with open. That needs to be reevaluated.
 */
@@ -318,11 +461,32 @@ return 0;
 * The "invalidate" function runs out of the device timer; it sets
 * a flag to simulate the removal of the media.
 */
+=======
+ * Revalidate. WE DO NOT TAKE THE LOCK HERE, for fear of deadlocking
+ * with open. That needs to be reevaluated.
+ */
+int
+osu_ramdisk_revalidate(struct gendisk *gd)
+{
+	struct osu_ramdisk_device *dev = gd->private_data;
+
+	if (dev->media_change) {
+		dev->media_change = 0;
+		memset(dev->data, 0, dev->size);
+	}
+	return 0;
+}
+
+/*
+ * The "invalidate" function runs out of the device timer; it sets
+ * a flag to simulate the removal of the media.
+ */
+>>>>>>> 7d4f229b78b0c858b47e5c8c66f66c5732df4b66
 void
 osu_ramdisk_invalidate(unsigned long ldev)
 {
 	struct osu_ramdisk_device *dev = (struct osu_ramdisk_device *) ldev;
-	
+
 	spin_lock(&dev->lock);
 	if (dev->users || !dev->data)
 		printk(KERN_WARNING "osurd: timer sanity check failed\n");
@@ -332,15 +496,26 @@ osu_ramdisk_invalidate(unsigned long ldev)
 }
 
 /*
+<<<<<<< HEAD
 * The HDIO_GETGEO ioctl is handled in blkdev_ioctl(), which
 * calls this. We need to implement getgeo, since we can't
 * use tools such as fdisk to partition the drive otherwise.
 */
+=======
+ * The HDIO_GETGEO ioctl is handled in blkdev_ioctl(), which
+ * calls this. We need to implement getgeo, since we can't
+ * use tools such as fdisk to partition the drive otherwise.
+ */
+>>>>>>> 7d4f229b78b0c858b47e5c8c66f66c5732df4b66
 int
 osu_ramdisk_getgeo(struct block_device *block_device, struct hd_geometry *geo)
 {
 	long size;
+<<<<<<< HEAD
 	
+=======
+
+>>>>>>> 7d4f229b78b0c858b47e5c8c66f66c5732df4b66
 	struct osu_ramdisk_device *dev = block_device->bd_disk->private_data;
 	size = dev->size * (hardsect_size / KERNEL_SECTOR_SIZE);
 	geo->cylinders = (size & ~0x3f) >> 6;
@@ -358,12 +533,21 @@ static struct block_device_operations osu_ramdisk_ops = {
 	.media_changed = osu_ramdisk_media_changed,
 	.revalidate_disk = osu_ramdisk_revalidate,
 	.getgeo = osu_ramdisk_getgeo
+<<<<<<< HEAD
 	/*.ioctl not used */
 };
 
 /*
 * Set up our internal device.
 */
+=======
+	    /*.ioctl not used */
+};
+
+/*
+ * Set up our internal device.
+ */
+>>>>>>> 7d4f229b78b0c858b47e5c8c66f66c5732df4b66
 static void
 setup_device(struct osu_ramdisk_device *dev, int which)
 {
@@ -375,14 +559,14 @@ setup_device(struct osu_ramdisk_device *dev, int which)
 		return;
 	}
 	spin_lock_init(&dev->lock);
-	
+
 	/*
 	* The timer which "invalidates" the device.
 	*/
 	init_timer(&dev->timer);
 	dev->timer.data = (unsigned long) dev;
 	dev->timer.function = osu_ramdisk_invalidate;
-	
+
 	/*
 	* The I/O queue, depending on whether we are using our own
 	* make_request function or not.
@@ -394,6 +578,7 @@ setup_device(struct osu_ramdisk_device *dev, int which)
 			goto out_vfree;
 		blk_queue_make_request(dev->queue, osu_ramdisk_make_request);
 		break;
+<<<<<<< HEAD
 	
 	case RM_FULL:
 		dev->queue =
@@ -407,6 +592,21 @@ setup_device(struct osu_ramdisk_device *dev, int which)
 		request_mode);
 	/* fall into.. */
 	
+=======
+
+	case RM_FULL:
+		dev->queue =
+		    blk_init_queue(osu_ramdisk_full_request, &dev->lock);
+		if (dev->queue == NULL)
+			goto out_vfree;
+		break;
+
+	default:
+		printk(KERN_NOTICE "Bad request mode %d, using simple\n",
+		       request_mode);
+		/* fall into.. */
+
+>>>>>>> 7d4f229b78b0c858b47e5c8c66f66c5732df4b66
 	case RM_SIMPLE:
 		dev->queue = blk_init_queue(osu_ramdisk_request, &dev->lock);
 		if (dev->queue == NULL)
@@ -433,7 +633,11 @@ setup_device(struct osu_ramdisk_device *dev, int which)
 	add_disk(dev->gd);
 	return;
 
+<<<<<<< HEAD
 out_vfree:
+=======
+      out_vfree:
+>>>>>>> 7d4f229b78b0c858b47e5c8c66f66c5732df4b66
 	if (dev->data)
 	vfree(dev->data);
 }
@@ -442,13 +646,14 @@ static int __init
 osu_ramdisk_init(void)
 {
 	int i;
-	
+
 	printk("osu_ramdisk_init\n");
-	
+
 	/* Register our device */
 	major_num = register_blkdev(major_num, OSU_DEV_NAME);
 	if (major_num <= 0) {
 		printk(KERN_WARNING
+<<<<<<< HEAD
 			"osu_ramdisk: unable to get major number\n");
 		return -(EBUSY);
 	}
@@ -459,10 +664,21 @@ osu_ramdisk_init(void)
 			return PTR_ERR(cipher);
 		}
 		memset(key, 0, 128); 
+=======
+		       "osu_ramdisk: unable to get major number\n");
+		return -(EBUSY);
 	}
-	
+
+	cipher = crypto_alloc_cipher("aes", 0, CRYPTO_ALG_ASYNC);
+	if (IS_ERR(cipher)) {
+		printk(KERN_ERR "osu_ramdisk_init: Failed to load cipher\n");
+		return PTR_ERR(cipher);
+>>>>>>> 7d4f229b78b0c858b47e5c8c66f66c5732df4b66
+	}
+
 	/* Allocate teh device array and init each of them */
 	Device =
+<<<<<<< HEAD
 	kmalloc(ndevices * sizeof (struct osu_ramdisk_device), GFP_KERNEL);
 	if (Device == NULL) {
 		printk(KERN_ERR
@@ -471,29 +687,45 @@ osu_ramdisk_init(void)
 	}
 		for (i = 0; i < ndevices; i++) {
 			setup_device(Device + i, i);
+=======
+	    kmalloc(ndevices * sizeof (struct osu_ramdisk_device), GFP_KERNEL);
+	if (Device == NULL) {
+		printk(KERN_ERR
+		       "osu_ramdisk_init: Failed to allocate the device\n");
+		goto out;
 	}
-	
+	for (i = 0; i < ndevices; i++) {
+		setup_device(Device + i, i);
+>>>>>>> 7d4f229b78b0c858b47e5c8c66f66c5732df4b66
+	}
+
 	return 0;
-	
-out:
+
+      out:
 	unregister_blkdev(major_num, OSU_DEV_NAME);
 	return -ENOMEM;
 }
 
 /* osu_ramdisk_exit(void)
+<<<<<<< HEAD
 *
 * Here we unregister our device an free any memory we used.
 */
+=======
+ *
+ *      Here we unregister our device an free any memory we used.
+ */
+>>>>>>> 7d4f229b78b0c858b47e5c8c66f66c5732df4b66
 static void __exit
 osu_ramdisk_exit(void)
 {
 	int i;
 	printk("osu_ramdisk_exit\n");
-	
+
 	/* unregister our device */
 	for (i = 0; i < ndevices; i++) {
 		struct osu_ramdisk_device *dev = Device + i;
-		
+
 		del_timer_sync(&dev->timer);
 		if (dev->gd) {
 			del_gendisk(dev->gd);
@@ -501,12 +733,20 @@ osu_ramdisk_exit(void)
 		}
 		if (dev->queue) {
 			blk_cleanup_queue(dev->queue);
+<<<<<<< HEAD
 			}
+=======
+		}
+>>>>>>> 7d4f229b78b0c858b47e5c8c66f66c5732df4b66
 		if (dev->data) {
 			vfree(dev->data);
 		}
 	}
+<<<<<<< HEAD
 	
+=======
+
+>>>>>>> 7d4f229b78b0c858b47e5c8c66f66c5732df4b66
 	unregister_blkdev(major_num, OSU_DEV_NAME);
 	crypto_free_cipher(cipher);
 	kfree(Device);
