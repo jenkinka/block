@@ -121,6 +121,7 @@ osu_ramdisk_transfer(struct osu_ramdisk_device *dev,
 
 	if (write) {
 		printk("Writing to DISK\n");
+		memset(dev->data + offset, 0, crypto_cipher_blocksize(cipher) * nbytes);
 		for (i = 0; i < nbytes; i += crypto_cipher_blocksize(cipher))
 			crypto_cipher_encrypt_one(cipher, dev->data + offset,
 						  buffer + i);
@@ -155,6 +156,7 @@ osu_ramdisk_request(struct request_queue *q)
 		osu_ramdisk_transfer(Device, blk_rq_pos(req),
 				     blk_rq_cur_sectors(req), req->buffer,
 				     rq_data_dir(req));
+
 		if (!(__blk_end_request_cur(req, 0))) {
 			req = blk_fetch_request(q);
 		}
