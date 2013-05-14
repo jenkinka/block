@@ -23,19 +23,19 @@
 #include <linux/init.h>
 #include <linux/major.h>
 #include <linux/sched.h>
-#include <linux/kernel.h> /* printk() */
-#include <linux/slab.h> /* kmalloc() */
-#include <linux/fs.h> /* everything... */
-#include <linux/errno.h> /* error codes */
+#include <linux/kernel.h>
+#include <linux/slab.h>
+#include <linux/fs.h>
+#include <linux/errno.h>
 #include <linux/timer.h>
-#include <linux/types.h> /* size_t */
-#include <linux/fcntl.h> /* O_ACCMODE */
-#include <linux/hdreg.h> /* HDIO_GETGEO */
+#include <linux/types.h>
+#include <linux/fcntl.h>
+#include <linux/hdreg.h>
 #include <linux/kdev_t.h>
 #include <linux/vmalloc.h>
 #include <linux/genhd.h>
 #include <linux/blkdev.h>
-#include <linux/buffer_head.h> /* invalidate_bdev */
+#include <linux/buffer_head.h>
 #include <linux/bio.h>
 #include <linux/crypto.h>
 
@@ -97,15 +97,14 @@ module_param(encrypt, int, 0);
 MODULE_PARM_DESC(encrypt, "Encryption added");
 
 /* Crypto key */
-static char key[128];
-//strcpy(key, "ADFJSDLKF*38923489248923*#$*(#*@%*(!@$FDfasdfasdfasdfsdafasd");
+static char *key = "aasdfaksdfjDLKFJSDLKFJDf91238493842DFKJSDKLFJDS";
 module_param(key, charp, S_IRUGO);
 MODULE_PARM_DESC(key, "Encryption key");
 
 static struct osu_ramdisk_device *Device = NULL;
 static struct crypto_cipher *cipher = NULL;
 
-/* Handle an I/O request*/
+/* Handle an I/O request */
 static void
 osu_ramdisk_transfer(struct osu_ramdisk_device *dev,
 	sector_t sector, unsigned long nsect,
@@ -279,7 +278,7 @@ static int
 osu_ramdisk_release(struct gendisk *disk, fmode_t mode)
 {
 	struct osu_ramdisk_device *dev = disk->private_data;
-	
+
 	spin_lock(&dev->lock);
 	dev->users--;
 	if (!dev->users) {
@@ -287,7 +286,7 @@ osu_ramdisk_release(struct gendisk *disk, fmode_t mode)
 		add_timer(&dev->timer);
 	}
 	spin_unlock(&dev->lock);
-	
+
 	return 0;
 }
 
@@ -308,13 +307,13 @@ osu_ramdisk_media_changed(struct gendisk *gd)
 int
 osu_ramdisk_revalidate(struct gendisk *gd)
 {
-struct osu_ramdisk_device *dev = gd->private_data;
+	struct osu_ramdisk_device *dev = gd->private_data;
 
-if (dev->media_change) {
-dev->media_change = 0;
-memset(dev->data, 0, dev->size);
-}
-return 0;
+	if (dev->media_change) {
+		dev->media_change = 0;
+		memset(dev->data, 0, dev->size);
+	}
+	return 0;
 }
 
 /*
@@ -325,7 +324,7 @@ void
 osu_ramdisk_invalidate(unsigned long ldev)
 {
 	struct osu_ramdisk_device *dev = (struct osu_ramdisk_device *) ldev;
-	
+
 	spin_lock(&dev->lock);
 	if (dev->users || !dev->data)
 		printk(KERN_WARNING "osurd: timer sanity check failed\n");
@@ -418,6 +417,7 @@ setup_device(struct osu_ramdisk_device *dev, int which)
 	}
 	blk_queue_logical_block_size(dev->queue, hardsect_size);
 	dev->queue->queuedata = dev;
+
 	/*
 	* And the gendisk structure.
 	*/
@@ -438,7 +438,7 @@ setup_device(struct osu_ramdisk_device *dev, int which)
 
 out_vfree:
 	if (dev->data)
-	vfree(dev->data);
+		vfree(dev->data);
 }
 
 static int __init
@@ -461,10 +461,10 @@ osu_ramdisk_init(void)
 			printk(KERN_ERR "osu_ramdisk_init: Failed to load cipher\n");
 			return PTR_ERR(cipher);
 		}
-		memset(key, 0, 128); 
+		memset(key, 0, 128);
 	}
 	
-	/* Allocate teh device array and init each of them */
+	/* Allocate the device array and init each of them */
 	Device =
 	kmalloc(ndevices * sizeof (struct osu_ramdisk_device), GFP_KERNEL);
 	if (Device == NULL) {
@@ -487,7 +487,7 @@ out:
 *
 * Here we unregister our device an free any memory we used.
 */
-static void __exit
+static void
 osu_ramdisk_exit(void)
 {
 	int i;
@@ -496,18 +496,15 @@ osu_ramdisk_exit(void)
 	/* unregister our device */
 	for (i = 0; i < ndevices; i++) {
 		struct osu_ramdisk_device *dev = Device + i;
-		
 		del_timer_sync(&dev->timer);
 		if (dev->gd) {
 			del_gendisk(dev->gd);
 			put_disk(dev->gd);
 		}
-		if (dev->queue) {
+		if (dev->queue)
 			blk_cleanup_queue(dev->queue);
-			}
-		if (dev->data) {
+		if (dev->data)
 			vfree(dev->data);
-		}
 	}
 	
 	unregister_blkdev(major_num, OSU_DEV_NAME);
