@@ -5,6 +5,8 @@ TODO: our names here.
 Plan
 ----
 -We based our code off of ...
+-- Felt this was a good jumping off point
+-- also felt that ...
 -added in crypto stuff
 -talk about advantages
 -talk about dis-ad..
@@ -12,7 +14,8 @@ Plan
 Implementation
 --------------
 -implemented as a kernel module
--registers itself as a block device
+-registers itself as a block device, adds it as a disk using
+ add_disk().
 -special module parameters, including stuff for sectors,
  private key etc
 
@@ -23,7 +26,10 @@ Implementation
 ***Ramdisk Implementation***
 The driver exposes itself as a block device, which reads and 
 writes to a block of memory, allocated when it is initialized.
-The 
+We have three different request modes for our file system:
+ * RM_NO_QUEUE: This 
+ * RM_FULL: 
+ * RM_SIMPLE:
 
 ***Crypto Implementation***
 - how it works
@@ -63,30 +69,32 @@ uhhh what does this one do?
 uhh this one too
 
 ***osu_ramdisk_media_changed()***
-whats a media change? why can this happen?
 
 ***osu_ramdisk_release()***
-this releases the disk
-what does that mean??
 
 ***osu_ramdisk_open()***
-what does open do?
 
 ***osu_ramdisk_make_request()***
-takes a  request from the request queue and processes it
-using osu_ramdisk_bio_transfer().
+This function takes a  request from the request queue and 
+processes it using osu_ramdisk_bio_transfer().
 
 ***osu_ramdisk_full_request()***
-idk
 
 ***osu_ramdisk_transfer_request()***
-does a bio request (todo explain)
+Enumerates over each request in a bio 
+
 
 ***osu_ramdisk_bio_transfer()***
+Iterates over each bio_vec in a given bio struct, and transfers
+them using osu_ramdisk_transfer().
 
 ***osu_ramdisk_request()***
+Handles simple requests. Transfers each request in the queue by
+enumerating over it using blk_fetch_request(), 
+and calling osu_ramdisk_transfer() on each request.
 
 ***osu_ramdisk_transfer()***
+
 
 Testing
 -------
