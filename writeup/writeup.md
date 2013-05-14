@@ -1,27 +1,34 @@
 Project 3
 =========
-TODO: our names here.
+Jordan Bayles
+Corey Eckelman
+Kai Jenkins-Rathburn
+Jennifer Wolfe
 
 Plan
 ----
--We based our code off of ...
+-We based our code off of the sbull.c driver from Linux Driver 
+Development 3rd Edition. 
 -- Felt this was a good jumping off point
--- also felt that ...
--added in crypto stuff
--talk about advantages
--talk about dis-ad..
+-- also good introduction to how it works
+-- the necessary changes between 2.6 and 3.04, as well as the 
+-- changes involved in impl crypto would present a challenge.
+- We implemented crypto using the ..
+-Divided work evenly, between test writing, writeup and coding.
+--Formulated plan.
 
 Implementation
 --------------
--implemented as a kernel module
--registers itself as a block device, adds it as a disk using
- add_disk().
--special module parameters, including stuff for sectors,
- private key etc
+ The driver itself is implemented as a kernel module. It register
+ itself as a block device, adding itself 
+ In each devices setup function it adds itself as a disk. 
+ It stores
+ some specific module parameters including the amount of devices
+ to store and the request mode. 
 
--creates a block_device_operations struct
-- n functions:
-- list
+ The block_device_operations struct implements .getgeo, as well
+ as many operations related to acquiring handles or changing media
+ in the drive.
 
 ***Ramdisk Implementation***
 The driver exposes itself as a block device, which reads and 
@@ -35,7 +42,7 @@ We have three different request modes for our file system:
    a function that does not group requests.
 
 ***Crypto Implementation***
-- how it works
+In the devices setup function we 
 
 Implementation Details
 ----------------------
