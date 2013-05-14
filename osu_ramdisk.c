@@ -114,10 +114,8 @@ osu_ramdisk_transfer(struct osu_ramdisk_device *dev,
 	unsigned long nbytes = nsect * KERNEL_SECTOR_SIZE;
 	int i;
 	unsigned long length = (unsigned long) strlen(key);	/* keylength */
-	
-	crypto_cipher_clear_flags(cipher, ~0);
-	crypto_cipher_setkey(cipher, key, length);
-	
+	//crypto_cipher_clear_flags(cipher, ~0);
+	//crypto_cipher_setkey(cipher, key, length);
 	if ((offset + nbytes) > dev->size) {
 		printk(KERN_NOTICE "osu_ramdisk: Beyond-end write\n");
 		return;
@@ -131,7 +129,7 @@ osu_ramdisk_transfer(struct osu_ramdisk_device *dev,
 			for (i = 0; i < nbytes; i += crypto_cipher_blocksize(cipher))
 				crypto_cipher_encrypt_one(cipher, dev->data + offset,
 				buffer + i);
-		}else
+		} else
 			memcpy(dev->data+offset, buffer, nbytes);
 
 	} else {
@@ -139,7 +137,7 @@ osu_ramdisk_transfer(struct osu_ramdisk_device *dev,
 		if (encrypt){
 			for (i = 0; i < nbytes; i += crypto_cipher_blocksize(cipher)) {
 				crypto_cipher_decrypt_one(cipher, buffer + i,
-				dev->data + offset + i);
+							  dev->data + offset + i);
 			}
 		}else
 			memcpy(buffer, dev->data+offset, nbytes);
@@ -158,17 +156,15 @@ osu_ramdisk_request(struct request_queue *q)
 	req = blk_fetch_request(q);
 	while (req != NULL) {
 		struct osu_ramdisk_device *Device = req->rq_disk->private_data;
-	
 		if (req == NULL || (req->cmd_type != REQ_TYPE_FS)) {
 			printk(KERN_NOTICE "Skip non-CMD request\n");
 			__blk_end_request_all(req, -EIO);
 			continue;
 		}
-	
 		osu_ramdisk_transfer(Device, blk_rq_pos(req),
 				     blk_rq_cur_sectors(req), req->buffer,
 				     rq_data_dir(req));
-
+		
 		if (!(__blk_end_request_cur(req, 0))) {
 			req = blk_fetch_request(q);
 		}
@@ -184,7 +180,7 @@ osu_ramdisk_bio_transfer(struct osu_ramdisk_device *dev, struct bio *pbio)
 	int i;
 	struct bio_vec *bvec;
 	sector_t bsector = pbio->bi_sector;
-	
+
 	/* transfer each segment */
 	bio_for_each_segment(bvec, pbio, i) {
 		char *buff = __bio_kmap_atomic(pbio, i, KM_USER0);
@@ -222,7 +218,7 @@ osu_ramdisk_full_request(struct request_queue *q)
 	struct request *req;
 	int sectors_xferred;
 	struct osu_ramdisk_device *dev = q->queuedata;
-	
+
 	req = blk_fetch_request(q);
 	while (req != NULL) {
 		if (req == NULL || (req->cmd_type != REQ_TYPE_FS)) {
@@ -245,7 +241,7 @@ osu_ramdisk_make_request(struct request_queue *q, struct bio *pbio)
 {
 	struct osu_ramdisk_device *dev = q->queuedata;
 	int status;
-	
+
 	status = osu_ramdisk_bio_transfer(dev, pbio);
 	bio_endio(pbio, status);
 	return 0;
@@ -259,7 +255,7 @@ static int
 osu_ramdisk_open(struct block_device *device, fmode_t mode)
 {
 	struct osu_ramdisk_device *dev = device->bd_disk->private_data;
-	
+
 	del_timer_sync(&dev->timer);
 	/* filp->private_data = dev; */
 	spin_lock(&dev->lock);
@@ -342,7 +338,7 @@ int
 osu_ramdisk_getgeo(struct block_device *block_device, struct hd_geometry *geo)
 {
 	long size;
-	
+
 	struct osu_ramdisk_device *dev = block_device->bd_disk->private_data;
 	size = dev->size * (hardsect_size / KERNEL_SECTOR_SIZE);
 	geo->cylinders = (size & ~0x3f) >> 6;
@@ -377,38 +373,35 @@ setup_device(struct osu_ramdisk_device *dev, int which)
 		return;
 	}
 	spin_lock_init(&dev->lock);
-	
 	/*
 	* The timer which "invalidates" the device.
 	*/
 	init_timer(&dev->timer);
 	dev->timer.data = (unsigned long) dev;
 	dev->timer.function = osu_ramdisk_invalidate;
-	
+
 	/*
 	* The I/O queue, depending on whether we are using our own
 	* make_request function or not.
 	*/
 	switch (request_mode) {
-	case RM_NO_QUEUE:
+	case RM_NOQUEUE:
 		dev->queue = blk_alloc_queue(GFP_KERNEL);
 		if (dev->queue == NULL)
 			goto out_vfree;
 		blk_queue_make_request(dev->queue, osu_ramdisk_make_request);
 		break;
-	
 	case RM_FULL:
 		dev->queue =
 		blk_init_queue(osu_ramdisk_full_request, &dev->lock);
 		if (dev->queue == NULL)
 			goto out_vfree;
 		break;
-	
 	default:
 		printk(KERN_NOTICE "Bad request mode %d, using simple\n",
 		request_mode);
 	/* fall into.. */
-	
+
 	case RM_SIMPLE:
 		dev->queue = blk_init_queue(osu_ramdisk_request, &dev->lock);
 		if (dev->queue == NULL)
@@ -421,6 +414,7 @@ setup_device(struct osu_ramdisk_device *dev, int which)
 	/*
 	* And the gendisk structure.
 	*/
+
 	dev->gd = alloc_disk(MINORS);
 	if (!dev->gd) {
 		printk(KERN_NOTICE "alloc_disk failure\n");
@@ -445,42 +439,42 @@ static int __init
 osu_ramdisk_init(void)
 {
 	int i;
-	
+
 	printk("osu_ramdisk_init\n");
-	
-	/* Register our device */
-	major_num = register_blkdev(major_num, OSU_DEV_NAME);
-	if (major_num <= 0) {
-		printk(KERN_WARNING
-			"osu_ramdisk: unable to get major number\n");
-		return -(EBUSY);
-	}
+
 	if (encrypt){
 		cipher = crypto_alloc_cipher("aes", 0, CRYPTO_ALG_ASYNC);
 		if (IS_ERR(cipher)) {
 			printk(KERN_ERR "osu_ramdisk_init: Failed to load cipher\n");
 			return PTR_ERR(cipher);
 		}
-		memset(key, 0, 128);
 	}
-	
+
+	/* Register our device */
+	major_num = register_blkdev(major_num, OSU_DEV_NAME);
+
+	if (major_num <= 0) {
+		printk(KERN_WARNING
+			"osu_ramdisk: unable to get major number\n");
+		return -(EBUSY);
+	}
+
 	/* Allocate the device array and init each of them */
+
 	Device =
 	kmalloc(ndevices * sizeof (struct osu_ramdisk_device), GFP_KERNEL);
 	if (Device == NULL) {
 		printk(KERN_ERR
 			"osu_ramdisk_init: Failed to allocate the device\n");
-	goto out;
+		goto out;
 	}
-		for (i = 0; i < ndevices; i++) {
-			setup_device(Device + i, i);
+	for (i = 0; i < ndevices; i++) {
+		setup_device(Device + i, i);
 	}
-	
 	return 0;
-	
-out:
-	unregister_blkdev(major_num, OSU_DEV_NAME);
-	return -ENOMEM;
+	out:
+		unregister_blkdev(major_num, OSU_DEV_NAME);
+		return -ENOMEM;
 }
 
 /* osu_ramdisk_exit(void)
@@ -506,9 +500,10 @@ osu_ramdisk_exit(void)
 		if (dev->data)
 			vfree(dev->data);
 	}
-	
 	unregister_blkdev(major_num, OSU_DEV_NAME);
+	
 	crypto_free_cipher(cipher);
+	
 	kfree(Device);
 }
 
