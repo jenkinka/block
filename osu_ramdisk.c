@@ -166,14 +166,9 @@ osu_ramdisk_request(struct request_queue *q)
 		}
 	
 		osu_ramdisk_transfer(Device, blk_rq_pos(req),
-<<<<<<< HEAD
 				     blk_rq_cur_sectors(req), req->buffer,
 				     rq_data_dir(req));
 
-=======
-		blk_rq_cur_sectors(req), req->buffer,
-		rq_data_dir(req));
->>>>>>> 21d686d834e4d41833a5550cc322682862c085af
 		if (!(__blk_end_request_cur(req, 0))) {
 			req = blk_fetch_request(q);
 		}
