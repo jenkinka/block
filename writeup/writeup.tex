@@ -1,4 +1,4 @@
-\section{Project 3}
+\section{Project 3: Encrypted Ramdisk}
 
 Jordan Bayles Corey Eckelman Kai Jenkins-Rathburn Jennifer Wolfe
 
@@ -43,10 +43,10 @@ function that does not group requests.
 \textbf{\emph{Crypto Implementation}} In the devices setup function we
 call crypto\_alloc\_cipher(), to create a new cipher object, and we free
 it in the \emph{exit function with crypto}free\_cipher(). The main bulk
-of the crypto /stuff happens in ramdisk\_transfer()- we set our key to
-the one defined in the module parameter, and then we either read or
-write whole blocks using crypto\_cipher\_decrypt\_one() or
-crypto\_cipher\_encrypt\_one()\\respectively.
+of the crypto work happens in ramdisk\_transfer()- we set our key to the
+one defined in the module parameter, and then we either read or write
+whole blocks using crypto\_cipher\_decrypt\_one() or
+crypto\_cipher\_encrypt\_one() respectively.
 
 \subsection{Implementation Details}
 
@@ -96,6 +96,7 @@ decrypting it.
 \subsection{Testing}
 
 -We can test basic functionality by doing reads and writes to the
-filesys. -We can test the encryption by printk-ing the encry
+filesys. -We can test the encryption by printk-ing the encrypted /
+decrypte stuff.
 
 \section{Source Code}
