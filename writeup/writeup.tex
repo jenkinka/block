@@ -34,11 +34,15 @@ operations related to acquiring handles or changing media in the drive.
 \textbf{\emph{Ramdisk Implementation}} The driver exposes itself as a
 block device, which reads and writes to a block of memory, allocated
 when it is initialized. We have three different request modes for our
-file system: * RM\_NO\_QUEUE: This implements requests using no queue,
-and blk\_queue\_make\_request(). * RM\_FULL: This implements requests
-using blk\_init\_queue() and a request function that groups requests. *
-RM\_SIMPLE: This implements requests using blk\_init\_queue() and a
+file system: 
+\begin{itemize}
+\item{RM\_NO\_QUEUE} This implements requests using no queue,
+and blk\_queue\_make\_request().  
+\item{RM\_FULL} This implements requests
+using blk\_init\_queue() and a request function that groups requests. 
+\item{RM\_SIMPLE} This implements requests using blk\_init\_queue() and a
 function that does not group requests.
+\end{itemize}
 
 \textbf{\emph{Crypto Implementation}} In the devices setup function we
 call crypto\_alloc\_cipher(), to create a new cipher object, and we free
