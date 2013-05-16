@@ -359,12 +359,12 @@ setup_device(struct osu_ramdisk_dev *dev, int which)
 	}
 	blk_queue_logical_block_size(dev->queue, hardsect_size);
 	dev->queue->queuedata = dev;
-	dev->gd = alloc_disk(osu_ramdisk_MINORS);
+	dev->gd = alloc_disk(OSU_RAMDISK_MINORS);
 	if (!dev->gd) {
 		printk(KERN_NOTICE "alloc_disk failure\n");
 		goto out_vfree;
 	}
-	dev->gd->major = major_number;
+	dev->gd->major = osu_ramdisk_major;
 	dev->gd->first_minor = which * OSU_RAMDISK_MINORS;
 	dev->gd->fops = &osu_ramdisk_ops;
 	dev->gd->queue = dev->queue;
@@ -390,32 +390,32 @@ osu_ramdisk_init(void)
 			printk(KERN_ERR "osu_ramdisk_init: Failed to load cipher\n");
 			return PTR_ERR(cipher);
 		}
-	}
-
-	major_number = register_blkdev(major_number, OSU_DEV_NAME);
-	if (major_number <= 0) {
+	}		
+		
+	osu_ramdisk_major = register_blkdev(osu_ramdisk_major, OSU_DEV_NAME);
+	if (osu_ramdisk_major <= 0) {
 		printk(KERN_WARNING "osu_ramdisk: unable to get major number\n");
 		return -EBUSY;
 	}
-	device = kmalloc(devices_num * sizeof (struct osu_ramdisk_dev), GFP_KERNEL);
-	if (device == NULL)
+	devices = kmalloc(ndevices * sizeof (struct osu_ramdisk_dev), GFP_KERNEL);
+	if (devices == NULL)
 		goto out_unregister;
 
-	for (i = 0; i < devices_num; i++)
-		setup_device(device + i, i);
+	for (i = 0; i < ndevices; i++)
+		setup_device(devices + i, i);
 
-	return 0;
+		return 0;
       out_unregister:
-		unregister_blkdev(major_number, OSU_DEV_NAME);
-		return -ENOMEM;
+	unregister_blkdev(osu_ramdisk_major, OSU_DEV_NAME);
+	return -ENOMEM;
 }
 
 static void
 osu_ramdisk_exit(void)
 {
 	int i;
-	for (i = 0; i < devices_num; i++) {
-		struct osu_ramdisk_dev *dev = device + i;
+	for (i = 0; i < ndevices; i++) {
+		struct osu_ramdisk_dev *dev = devices + i;
 		del_timer_sync(&dev->timer);
 		if (dev->gd) {
 			del_gendisk(dev->gd);
@@ -426,9 +426,9 @@ osu_ramdisk_exit(void)
 		if (dev->data)
 			vfree(dev->data);
 	}
-	unregister_blkdev(major_number, OSU_DEV_NAME);
+	unregister_blkdev(osu_ramdisk_major, OSU_DEV_NAME);
 	crypto_free_cipher(cipher);
-	kfree(device);
+	kfree(devices);
 }
 
 module_init(osu_ramdisk_init);
