@@ -75,9 +75,9 @@ struct osu_ramdisk_dev {
 
 
 
-static int osurd_major = 0;
-module_param(osurd_major, int, 0);
-MODULE_PARM_DESC(major_num, "Major number, kernel can allocate");
+static int osu_ramdisk_major = 0;
+module_param(osu_ramdisk_major, int, 0);
+MODULE_PARM_DESC(osu_ramdisk_major, "Major number, kernel can allocate");
 static int hardsect_size = 512;
 module_param(hardsect_size, int, 0);
 MODULE_PARM_DESC(hardsect_size, "Sector size");
